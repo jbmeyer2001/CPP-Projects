@@ -6,14 +6,12 @@
 #include <mutex>
 #include <chrono>
 
-using namespace std;
-
-bool alphabetical(string a, string b);
+bool alphabetical(std::string a, std::string b);
 void initializeLibraries(void);
 void cmdWindowControl(void);
 void writebackAndReinitialize(void);
 
-static mutex s_mu;
+static std::mutex s_mu;
 static bool s_endProgram = false;
 static bool s_spreadsheetWritebackFlag = false;
 static bool s_CentralBranchBooksShelvedFlag = false;
@@ -21,52 +19,46 @@ static bool s_PGBranchBooksShelvedFlag = false;
 static bool s_MPBranchBooksShelvedFlag = false;
 
 /*
-	Objects of bookNode function as storage for the title and author of a book that are parts of two
-	different binary search tree. The left leaf always comes alphabetically before and the right leaf 
-	always comes alphabetically after. There is a binary search tree for both the title and the author, 
-	although they use the same spot in memory just point in a different configuration, hence the 4 bookNode pointers defined.
-
-	Encapsulation is used such that the program/user only has the access/ability to:
-	 - (method) 	Assign the title and author.
-	 - (method) 	Get the title.
-	 - (method) 	Get the author's name.
-	 - (method)	Set the delete flag (means it won’t be written back into the spreadsheet, or printed as part of the book tree that it is contained in).
-	 - (method)	Get the delete flag.
+	class description:
+	Objects of bookNode are used as storage for the title and author of a book, and as
+	nodes that are part of two different binary search trees. The left leaf always comes
+	alphabetically before the right leaf. There is a binary search tree for both the title
+	and the author, which is the reason for the 4 bookNode pointers defined.
 */
 class bookNode
 {
 private:
-	string title;
-	string authorName;
+	std::string title;
+	std::string authorName;
 	bool deleteFlag = false;
 public:
-	
+
 	bookNode* rightLeafTitle = NULL;
 	bookNode* leftLeafTitle = NULL;
 	bookNode* rightLeafAuthor = NULL;
 	bookNode* leftLeafAuthor = NULL;
 
-	void assign(string Title, string Author)
+	void assign(std::string Title, std::string Author)
 	{
 		title = Title;
 		authorName = Author;
 	}
-	string getTitle(void)
+	std::string getTitle(void)
 	{
 		return title;
- 	}
-	string getAuthorName(void)
+	}
+	std::string getAuthorName(void)
 	{
 		return authorName;
 	}
 
-	//----------------------------------------------------------------------------------//
-	//The delete flag is here because when a book is removed from the binary search tree,
-	//it isn't actually removed (would be really confusing with the four pointers).
-	//Instead, the delete flag is put up and it functions as if it is deleted until
-	//the structure is written back into the spreadsheet .csv file, and the deleted
-	//node is not written back in.
-	//----------------------------------------------------------------------------------//
+	/*
+		function description:
+		The delete flag is here because when a book is removed from the binary search tree,
+		it isn't deleted from memory or removed from the tree (this would cause issues with
+		the overlapping trees). Instead, the delete flag is set to true, and the 'removed'
+		bookNode isn't written back into the .csv file that is used to create this tree.
+	*/
 	void setDeleteFlag(void)
 	{
 		deleteFlag = true;
@@ -78,52 +70,38 @@ public:
 };
 
 /*
-	the bookTree class does all operations that allocate, traverse, access data from, and deallocate
-	from a binary search tree of sudokuNodes.
+	class description:
+	the bookTree class is a binary search tree that contains all the functions which
+	allocate, traverse, access data from, and deallocate bookNodes.
 
-	the bookTree node also does all of the writing back to the spreadsheet .csv files.
-
-	Encapsulation is used such that the program/user only has the access/ability to:
-	 - (method) 	Print the list.
-	 - (method) 	Add a book node to the binary search tree.
-	 - (method) 	Delete a book from the binary search tree.
-	 - (method)		Writeback the data in the binary search tree into a .csv file specified by a filename (filename is stored in objects that inherit this class)
-
-	 Encapsulation is used such that the classes that inherit this class have the access/ability to to:
-	  - (property)	view the root node to the book tree.
-	  - (method)	print the list in alphabetical order (by title or author)
+	the bookTree class also does all of the writing back to the spreadsheet .csv files.
 */
 class bookTree
 {
 private:
 
 	/*
-	Prints the binary search tree in post order to the .csv file, this is done during writeback.
-	It is done in post order, because if the .csv file becomes in alphabetical order then when it is
-	initialized to the binary search tree, the binary search tree will effectively be a linked list.
+		function description:
+		Prints the binary search tree in post order to the .csv file, this is done during writeback.
+		It is done in post order, because, if the .csv file were to become in alphabetical order then the tree
+		would become a linked list, which has a slower search time then a binary search tree.
 
-	PARAM:	bookNode* node, used to traverse the tree recursively.
-	PARAM:	ofstream file, file stream of the .csv file declared in a different method.
-	PARAM:	integer num, a random number (0 or 1) declared in a different method which tells 
-			the method whether to writeback with the title tree or the author tree. The goal
-			of this is to keep the .csv file as randomized as possible, because the 
-			binary search tree will be best optimized that way.
+		PARAM:	bookNode* node, used to traverse the tree recursively.
+		PARAM:	ofstream file, file stream of the .csv file.
+		PARAM:	integer num, a random number (0 or 1) which decides whether to writeback with the
+				title tree or the author tree. The goal of this is to keep the .csv file as randomized
+				as possible to optimize the binary search tree.
 	*/
-	void printPostOrderToFile(bookNode* node, ofstream &file, int num)
+	void printPostOrderToFile(bookNode* node, std::ofstream& file, int num)
 	{
-		string line;
-		string title;
-		string author;
+		std::string line;
+		std::string title;
+		std::string author;
 
-		//---------------------//
-		//Base case of traversal.
-		//---------------------//
+		//base case
 		if (node == NULL)
 			return;
 
-		//---------------------------------------------------------------------------------------------//
-		//Num parameter described at lines 107-110. Method is called recursively to print all the books.
-		//---------------------------------------------------------------------------------------------//
 		if (num == 1)
 		{
 			printPostOrderToFile(node->leftLeafTitle, file, num);
@@ -134,9 +112,8 @@ private:
 			printPostOrderToFile(node->leftLeafAuthor, file, num);
 			printPostOrderToFile(node->rightLeafAuthor, file, num);
 		}
-		//------------------------------------------//
-		//Only write back if the delete flag is false.
-		//------------------------------------------//
+
+		//only write back if the delete flag is false
 		if (!node->getDeleteFlag())
 		{
 			line = node->getTitle() + ',' + node->getAuthorName() + '\n';
@@ -145,15 +122,14 @@ private:
 	}
 
 	/*
-	Deallocates the binary search tree.
+		function description:
+		Deallocates the binary search tree.
 
-	PARAM: bookNode* node, used to traverse the binary search tree recursively.
+		PARAM: bookNode* node, used to traverse the binary search tree recursively.
 	*/
 	void postOrderDeallocation(bookNode* node)
 	{
-		//---------------------//
-		//Base case of traversal.
-		//---------------------//
+		//base case
 		if (node == NULL)
 			return;
 
@@ -166,52 +142,47 @@ protected:
 	bookNode* root;
 
 	/*
-	Prints the books in alphabetical order (title or author).
+		function description:
+		Prints the books in alphabetical order (title or author).
 
-	PARAM: bookNode* node, used to traverse the tree recursively.
-	PARAM: string select, selection for alphabetical traversal along title or author trees.
+		PARAM: bookNode* node, used to traverse the tree recursively.
+		PARAM: string select, selection for title or author.
 	*/
-	void printInOrder(bookNode* node, string select)
+	void printInOrder(bookNode* node, std::string select)
 	{
-		string title;
-		string authorName;
-		string space;
+		std::string title;
+		std::string authorName;
+		std::string space;
 		int spaceLength;
 		int titleLength;
 
-		//---------------------//
-		//Base case of traversal.
-		//---------------------//
+		//base case
 		if (node == NULL)
 			return;
 
-		//---------------------------------------------------//
 		//creating string variable 'space' to format the output.
-		//---------------------------------------------------//
 		title = node->getTitle();
 		authorName = node->getAuthorName();
 		space = "";
 		titleLength = title.length();
 		spaceLength = space.length();
-		
+
 		while (spaceLength + titleLength < 50)
 		{
 			space = space + " ";
 			spaceLength = space.length();
 		}
 
-		//----------------------------------------------//
-		//Actual in order printing algorithm. 
+		//In order printing algorithm. 
 		//Recurses along title leafs if title is selected,
 		//and along author leafs if author is selected.
-		//----------------------------------------------//
 		if (select == "title")
 		{
 			printInOrder(node->leftLeafTitle, select);
 
 			if (!node->getDeleteFlag())
 			{
-				cout << title << space << " by      " << authorName << "\n";
+				std::cout << title << space << " by      " << authorName << std::endl;
 			}
 
 			printInOrder(node->rightLeafTitle, select);
@@ -222,14 +193,14 @@ protected:
 
 			if (!node->getDeleteFlag())
 			{
-				cout << title << space << " by      " << authorName << "\n";
+				std::cout << title << space << " by      " << authorName << std::endl;
 			}
 
 			printInOrder(node->rightLeafAuthor, select);
 		}
 		else
-			cout << "incorrect selection, must be 'title' or 'author'";
-		
+			std::cout << "incorrect selection, must be 'title' or 'author'";
+
 	}
 
 public:
@@ -239,19 +210,17 @@ public:
 	}
 
 	/*
-	Prints the books in bookTree in either alphabetical order based off of the book title, or the authors name.
+		function description:
+		Prints the books in bookTree in either alphabetical order based off of the book title, or the authors name.
 
-	PARAM: string select: the selection for which alphabetical order (must be 'title' or 'author')
+		PARAM: string select: the selection for which alphabetical order (must be 'title' or 'author')
 	*/
-	void printList(string select)
+	void printList(std::string select)
 	{
 		printInOrder(root, select);
 	}
 
-	/*
-	Allocates and adds a book to the binary search tree with the properties of title and author.
-	*/
-	void addBook(string title, string author)
+	void addBook(std::string title, std::string author)
 	{
 		bookNode* newnode;
 		bookNode* traversal;
@@ -260,9 +229,7 @@ public:
 		newnode = new bookNode;
 		newnode->assign(title, author);
 
-		//--------------------------------------------------------------//
 		//If the binary search tree is empty, set the newnode as the root.
-		//--------------------------------------------------------------//
 		if (root == NULL)
 		{
 			root = newnode;
@@ -272,9 +239,7 @@ public:
 		traversal = root;
 		previous = NULL;
 
-		//-----------------------------------------------------------------------------//
 		//Traverses through the title tree and places the new book in alphabetical order.
-		//-----------------------------------------------------------------------------//
 		while (traversal != NULL)
 		{
 			if (alphabetical(newnode->getTitle(), traversal->getTitle()))
@@ -293,9 +258,7 @@ public:
 		else
 			previous->rightLeafTitle = newnode;
 
-	//------------------------------------------------------------------------------//
-	//Traverses through the author tree and places the new book in alphabetical order.
-	//------------------------------------------------------------------------------//
+		//Traverses through the author tree and places the new book in alphabetical order.
 		traversal = root;
 		previous = NULL;
 
@@ -319,31 +282,29 @@ public:
 	}
 
 	/*
-	Effectively deletes a book from the binary search tree (sets the delete flag as true).
+		function description:
+		Effectively deletes a book from the binary search tree (sets the delete flag as true).
 
-	PARAM: string title, the title of the book being deleted.
-	PARAM: string author, the author of the book being deleted.
-	RETURN: bool, an indicator of whether a book with the given parameters
-	was actually deleted (if no book matches the parameters, false is returned)
+		PARAM: string title, the title of the book being deleted.
+		PARAM: string author, the author of the book being deleted.
+		RETURN: bool, an indicator of whether a book with the given parameters
+		was actually deleted (if no book matches the parameters, false is returned)
 	*/
-	bool deleteBook(string title, string author)
+	bool deleteBook(std::string title, std::string author)
 	{
 		bookNode* traversal;
-		string traversalTitle;
-		string traversalAuthor;
+		std::string traversalTitle;
+		std::string traversalAuthor;
 
 		traversal = root;
 		traversalTitle = traversal->getTitle();
 		traversalAuthor = traversal->getAuthorName();
 
-		//----------------------------------------------------------------------------------//
-		//Traverses the title tree and stops iterating if it finds a book that 
-		//matches both parameters, returns false if the book is absent from the 
-		//binary search tree in the position it would be in (traversal reaches null pointer).
-		//----------------------------------------------------------------------------------//
+		//Traverses the title tree and stops iterating if a book is found which matches the paramters,
+		//returns false if the book is absent from the binary search tree
 		while ((title != traversalTitle) && (author != traversalAuthor))
 		{
-			
+
 			if (alphabetical(title, traversalTitle))
 			{
 				if (traversal->leftLeafTitle == NULL)
@@ -356,58 +317,48 @@ public:
 					return false;
 				traversal = traversal->rightLeafTitle;
 			}
-				
+
 
 			traversalTitle = traversal->getTitle();
 			traversalAuthor = traversal->getAuthorName();
 		}
 
-		//------------------------------------------------------------------//
-		//Effective deletion of the book. Actual deletion comes when the book 
-		//is deallocated and isn't written back into the .csv file.
-		//------------------------------------------------------------------//
+		//Effective deletion of the book. Actual removal from memory comes 
+		//when the book is deallocated but isn't written back into the .csv file.  
 		traversal->setDeleteFlag();
 		return true;
 	}
 
 	/*
-	Writes the books in the binary search tree back into the .csv file.
+		function description:
+		Writes the books in the binary search tree back into the .csv file.
 
-	PARAM:string filename, the filename to be written back into.
+		PARAM:string filename, the filename to be written back into.
 	*/
-	void writeback(string filename)
+	void writeback(std::string filename)
 	{
 		bookNode* node;
-		ofstream file;
+		std::ofstream file;
 
-		//-------------------------------------------------------------------------------//
 		//Integer num is used to decide whether writeback is done in post order with title 
-		//tree or author tree, increases the randomization of the .csv file.
-		//-------------------------------------------------------------------------------//
-		int num = rand() % 2; 
+		//tree or author tree, which increases the randomization of the .csv file.
+		int num = rand() % 2;
 		file.open(filename);
 		file.close();
-		file.open(filename, ios::app);
+		file.open(filename, std::ios::app);
 
 		node = root;
 
-		//---------------------------------------------------------------//
 		//Call to printPostOrderToFile does the actual writing to the file.
-		//---------------------------------------------------------------//
 		printPostOrderToFile(node, file, num);
 		file.close();
 	}
 
-	//--------------------------------------------------------------------------//
-	//Deconstructor:
-	//deallocates the book tree by calling the recursive deallocation method.
-	//
-	//'root = NULL' is here because when the writeback and reinitialization 
-	//occurs during runtime on a static version of the object, the binary search 
-	 //tree will not properly be reinitialized if root isn't null. This is because 
-	//the constructor that would normally set it to NULL cannot be called.
-	//--------------------------------------------------------------------------//
-	~bookTree() 
+	/*
+			funciton definition:
+			deallocates the book tree by calling the recursive deallocation function.
+	*/
+	~bookTree()
 	{
 		bookNode* node;
 		node = root;
@@ -417,31 +368,25 @@ public:
 };
 
 /*
-	Inherits from the bookTree class, and also adds a patron name to store and keep track of
-	in addition to the title and author parameters. The patron name is also included in the
-	.csv file.
-
-	Encapsulation is used such that the program/user only has the access/ability to:
-	 - (parameter)	Pointer to the next patronNode object in a linked list of patronNode objects
-	 - (method)		Set the patron name.
-	 - (method)		Get the patron name.
-	 - (method)		Write back to the .csv file, calls a similar post order print as the book tree,
-				but includes the patron name.
+	class description:
+	Inherits from the bookTree class, also keeps track of a patron name in addition to
+	the title and author parameters. The patron name is also included in the .csv file.
 */
 class patronNode : public bookTree
 {
 private:
-	string name;
+	std::string name;
 
 	/*
-	Exactly the same method as the writeback for just a book tree, except it prints the name as well.
-	See the printPostOrderToFile() method on line 112 for information on how the method works.
+		function description:
+		Exactly the same function as the writeback for just a book tree,
+		except it prints the patron name in addition to the title and author.
 	*/
-	void patronPrintPostOrderToFile(bookNode* node, ofstream& file, int num)
+	void patronPrintPostOrderToFile(bookNode* node, std::ofstream& file, int num)
 	{
-		string line;
-		string title;
-		string author;
+		std::string line;
+		std::string title;
+		std::string author;
 
 		if (node == NULL)
 			return;
@@ -465,24 +410,24 @@ private:
 public:
 	patronNode* next = NULL;
 
-	void setName(string Name)
+	void setName(std::string Name)
 	{
 		name = Name;
 	}
-	string getName(void)
+	std::string getName(void)
 	{
 		return name;
 	}
+
 	/*
-	Similar method as used for just the book tree class on line 377, except this method
-	does not have to do any file io, as it is being called by another method that inherits this 
-	class. Doing the same file opens and closes would result in loss of data.
+		Similar function as used for just the book tree class, except the file open
+		and closing is already done in the other function.
 	*/
-	void patronWriteback(string filename, ofstream& file)
+	void patronWriteback(std::string filename, std::ofstream& file)
 	{
 		bookNode* node;
 		int num = rand() % 2;
-	
+
 		node = root;
 
 		patronPrintPostOrderToFile(node, file, num);
@@ -491,78 +436,68 @@ public:
 };
 
 /*
-	the patronList class does all operations that allocate, traverse, access data from, and deallocate 
+	class description:
+	the patronList class does all operations that allocate, traverse, access data from, and deallocate
 	from a linked list of patronNodes.
-
-	Encapsulation is used such that the program/user only has the access/ability to:
-	- (method)		Print the list.
-	- (method)		Check out a book.
-	- (method)		Check in a book (return).
-	- (method)		Write back the data in the linked list to a .csv file containing data of checked out books.
-
 */
 class patronList
 {
 private:
 	patronNode* head;
-	string writebackFilename;
+	std::string writebackFilename;
 
 public:
-	patronList(string WritebackFilename)
+	patronList(std::string WritebackFilename)
 	{
 		writebackFilename = WritebackFilename;
 		head = NULL;
 	}
 
 	/*
-	Prints the checked out books by traversing the linked list and printing the patron (book tree) in each node.
+		function description:
+		Prints the checked out books by traversing the linked list and printing the patron (book tree) in each node.
 
-	PARAM: string select, selects whether to print alphabetically according to title or author.
+		PARAM: string select, selects whether to print alphabetically according to title or author.
 	*/
-	void printList(string select)
+	void printList(std::string select)
 	{
 		patronNode* traversal;
 		traversal = head;
 
-		//---------------//
 		//Prints head node.
-		//---------------//
-		cout << traversal->getName() << " has the following books checked out:" << endl;
+		std::cout << traversal->getName() << " has the following books checked out:" << std::endl;
 		traversal->printList(select);
-		cout << endl;
+		std::cout << std::endl;
 
 		if (traversal->next == NULL)
 			return;
 
-		//-------------------------//
 		//Prints the remaining nodes.
-		//-------------------------//
 		do
 		{
 			traversal = traversal->next;
-			cout << traversal->getName() << " has the following books checked out:" << endl;
+			std::cout << traversal->getName() << " has the following books checked out:" << std::endl;
 			traversal->printList(select);
-			cout << endl;
+			std::cout << std::endl;
 		} while (traversal->next != NULL);
 	}
 
 	/*
-	Checks out a book (adds to the patron list) by traversing through the linked list to see whether the patron who is 
-	checking a book out is already in the system. If they are in the system, the book is added to their binary search tree. 
-	If they are not in the system, a patron node is allocated and assigned the parameters.
+		function description:
+		Checks out a book (adds to the patron list) by traversing through the linked list to see whether the patron who is
+		checking a book out is already in the system. If they are in the system, the book is added to their binary search tree.
+		If they are not in the system, a patron node is allocated and assigned the parameters.
 
-	PARAM: string title, title of the book being checked out.
-	PARAM: string author, author of the book being checked out.
-	PARAM: patronName, name of the patron checking the book out.
+		PARAM: string title, title of the book being checked out.
+		PARAM: string author, author of the book being checked out.
+		PARAM: patronName, name of the patron checking the book out.
 	*/
-	void checkOut(string title, string author, string patronName)
+	void checkOut(std::string title, std::string author, std::string patronName)
 	{
 		patronNode* patron;
 		patronNode* newnode;
 
-		//---------------------------------------------------//
 		//If linked list is empty, add a new node to the head.
-		//---------------------------------------------------//
 		if (head == NULL)
 		{
 			newnode = new patronNode;
@@ -572,9 +507,7 @@ public:
 			return;
 		}
 
-		//--------------------------------------------------------------------------------//
-		//If linked list is empty, iterate through the list trying to find the patrons name.
-		//--------------------------------------------------------------------------------//
+		//If linked list is not empty, iterate through the list trying to find the patrons name.
 		patron = head;
 		while (patron->next != NULL)
 		{
@@ -591,9 +524,7 @@ public:
 			return;
 		}
 
-		//-------------------------------------------------------------------------------------------------------//
-		//If the method hasn't returned yet it means the patron was not in the list, so they are added to the list.
-		//-------------------------------------------------------------------------------------------------------//
+		//If the function hasn't returned yet it means the patron was not in the list, so they are added to the list.
 		newnode = new patronNode;
 		newnode->setName(patronName);
 		newnode->addBook(title, author);
@@ -601,15 +532,16 @@ public:
 	}
 
 	/*
-	checks in a book (removes from the patron list) by traversing through all users and thier respective binary search trees trying 
-	to find the book (defined by the parameters title and author). Returns true and sets the delete flag if it is found, 
-	returns false if a checked out book is not found matching the parameters.
+		function description:
+		checks in a book (removes from the patron list) by traversing through all users and thier respective binary search trees trying
+		to find the book (defined by the parameters title and author). Returns true and sets the delete flag if it is found,
+		returns false if a checked out book is not found matching the parameters.
 
-	PARAM: string title, title of the book to check back in.
-	PARAM: string author, author of the book to check back in.
-	RETURN: bool indicates whether a book was found and deleted or not.
+		PARAM: string title, title of the book to check back in.
+		PARAM: string author, author of the book to check back in.
+		RETURN: bool indicates whether a book was found and deleted or not.
 	*/
-	bool checkIn(string title, string author)
+	bool checkIn(std::string title, std::string author)
 	{
 		patronNode* patron;
 		patron = head;
@@ -624,22 +556,23 @@ public:
 	}
 
 	/*
-	writes back the list to the .csv file containing data on the checked out books.
+		function description:
+		writes back the list to the .csv file containing data on the checked out books.
 
-	PARAM: string filename, the file to write back to.
+		PARAM: string filename, the file to write back to.
 	*/
-	void fullListWriteback(string filename)
+	void fullListWriteback(std::string filename)
 	{
 		patronNode* traversal;
 		traversal = head;
-		
+
 		//---------------------------------------------------//
 		//Opens and closes the file to delete before appending.
 		//---------------------------------------------------//
-		ofstream file;
+		std::ofstream file;
 		file.open(filename);
 		file.close();
-		file.open(filename, ios::app);
+		file.open(filename, std::ios::app);
 
 		//--------------------//
 		//Linked list traversal.
@@ -653,14 +586,10 @@ public:
 		file.close();
 	}
 
-	//-------------------------------------------------------------------------//
-	//Deconstructor:
-	//deallocates the patron list.
-	//'head = NULL' is here because when the writeback and reinitialization 
-	//occurs during runtime on a static version of the object, the binary search 
-	//tree will not properly be reinitialized if root isn't null. This is because 
-	//the constructor that would normally set it to NULL cannot be called.
-	//-------------------------------------------------------------------------//
+	/*
+		function description:
+		deallocates the patron list.
+	*/
 	~patronList()
 	{
 		fullListWriteback(writebackFilename);
@@ -684,33 +613,31 @@ public:
 };
 
 /*
-	Library class inherits the booktree class, and also controls a linked list 
+	class description:
+	Library class inherits the booktree class, and also controls a linked list
 	of book nodes by using their rightLeafTitle bookNode* as 'next node'.
-
-	Encapsulation is used such that the program/user only has the access/ability to:
-	- (method)		Return a book (not added to the booktree until books are returned to be shelved).
-
 */
 class Library : public bookTree
 {
 private:
-	string writebackFilename;
+	std::string writebackFilename;
 	bookNode* shelvingBacklogHead;
 	int linkedListLength;
 public:
-	Library(string WritebackFilename)
+	Library(std::string WritebackFilename)
 	{
 		writebackFilename = WritebackFilename;
 	}
 
 	/*
-	Returns a book. The book is added to a linked list of book nodes first, until
-	five books have accumulated, then they are shelved into the book tree.
+		function description:
+		Returns a book. The book is added to a linked list of book nodes first, until
+		five books have accumulated, then they are shelved into the book tree.
 
-	PARAM: string title, title of the book being returned.
-	PARAM: string author, author of the book being returned.
+		PARAM: string title, title of the book being returned.
+		PARAM: string author, author of the book being returned.
 	*/
-	void bookReturned(string title, string author)
+	void bookReturned(std::string title, std::string author)
 	{
 		bookNode* newnode;
 		bookNode* traverse;
@@ -719,9 +646,7 @@ public:
 
 		newnode->assign(title, author);
 
-		//---------------------------------------------------------//
 		//If the linked list is empty, add the new node to the head.
-		//---------------------------------------------------------//
 		if (shelvingBacklogHead == NULL)
 		{
 			shelvingBacklogHead = newnode;
@@ -730,10 +655,8 @@ public:
 		}
 
 		traverse = shelvingBacklogHead;
-		//---------------------------------------------------------------------------//
 		//Using rightLeafTitle pointer like a next pointer so that the same class can
 		//be used in to form a tree and a linked list.
-		//---------------------------------------------------------------------------//
 		while (traverse->rightLeafTitle != NULL)
 		{
 			traverse = traverse->rightLeafTitle;
@@ -741,14 +664,10 @@ public:
 		traverse->rightLeafTitle = newnode;
 		linkedListLength++;
 
-		//-----------------------------------------------------------------//
 		//Books are shelved once five have been returned to the same library.
-		//-----------------------------------------------------------------//
 		if (linkedListLength == 5)
 		{
-			//----------------------------------------------------------------------------//
 			//So that the user can be informed that books were shelved and at which library.
-			//----------------------------------------------------------------------------//
 			if (writebackFilename == "CentralBransh.csv")
 			{
 				s_CentralBranchBooksShelvedFlag = true;
@@ -761,7 +680,7 @@ public:
 			{
 				s_MPBranchBooksShelvedFlag = true;
 			}
-			
+
 			traverse = shelvingBacklogHead;
 
 			for (int i = 1; i <= 5; i++)
@@ -770,9 +689,7 @@ public:
 				traverse = traverse->rightLeafTitle;
 			}
 
-			//------------------------------------------------------//
 			//Once books have been added to the tree, deallocate list.
-			//------------------------------------------------------//
 			traverse = shelvingBacklogHead;
 			for (int i = 1; i <= 5; i++)
 			{
@@ -782,20 +699,18 @@ public:
 
 			}
 
-			//---------------------------------------------------//
 			//Head is set to null once books have been deallocated.
-			//---------------------------------------------------//
 			shelvingBacklogHead = NULL;
 		}
 	}
 
-	//--------------------------------------------------------------------//
-	//Deconstructor:
-	//If Library is being deconstructed, be sure to add the backlog of books
-	//to the library even if there aren't five, and deallocate the list.
-	//Also calls a writeback of the binary search tree which represents it using the 
-	//writebackFilename parameter.
-	//--------------------------------------------------------------------//
+	/*
+		function description:
+		If Library is being deconstructed, be sure to add the backlog of books
+		to the library even if there aren't five, and deallocate the list.
+		Also calls a writeback of the binary search tree which represents it using the
+		writebackFilename parameter.
+	*/
 	~Library()
 	{
 		bookNode* traverse;
@@ -822,10 +737,10 @@ public:
 /*
 Static variables, to be used by multiple threads.
 */
-static string s_checkedOutFileName = "CheckedOut.csv";
-static string s_CentralBranchFileName = "CentralBranch.csv";
-static string s_PGBranchFileName = "PointGreyBranch.csv";
-static string s_MPBranchFileName = "MountPleasantBranch.csv";
+static std::string s_checkedOutFileName = "CheckedOut.csv";
+static std::string s_CentralBranchFileName = "CentralBranch.csv";
+static std::string s_PGBranchFileName = "PointGreyBranch.csv";
+static std::string s_MPBranchFileName = "MountPleasantBranch.csv";
 
 static patronList s_checkedOutObject(s_checkedOutFileName);
 static Library s_CentralBranchObject(s_CentralBranchFileName);
@@ -842,7 +757,7 @@ int main(void)
 	//--------------------------------------------------------------------------------//
 	initializeLibraries();
 
-	thread t1(writebackAndReinitialize);
+	std::thread t1(writebackAndReinitialize);
 	cmdWindowControl();
 	s_endProgram = true;
 	t1.join();
@@ -852,7 +767,7 @@ int main(void)
 Function that returns 1 if parameter a comes before b in alphabetical order,
 used to traverse binary search trees.
 */
-bool alphabetical(string a, string b)
+bool alphabetical(std::string a, std::string b)
 {
 	return a < b;
 }
@@ -863,119 +778,80 @@ all of the data from the .csv files to dynamic memory.
 */
 void initializeLibraries(void)
 {
-	string line;
-	string word;
-	string title;
-	string author;
-	string patronName;
+	std::string line, word, title, author, patronName;
 
-	ifstream checkedOut_ifstream;
-	ifstream CentralBranch_ifstream;
-	ifstream PGBranch_ifstream;
-	ifstream MPBranch_ifstream;
+	std::ifstream checkedOutStream, CentralBranchStream, PGBranchStream, MPBranchStream;
 
-	checkedOut_ifstream.open(s_checkedOutFileName);
-	CentralBranch_ifstream.open(s_CentralBranchFileName);
-	PGBranch_ifstream.open(s_PGBranchFileName);
-	MPBranch_ifstream.open(s_MPBranchFileName);
+	checkedOutStream.open(s_checkedOutFileName);
+	CentralBranchStream.open(s_CentralBranchFileName);
+	PGBranchStream.open(s_PGBranchFileName);
+	MPBranchStream.open(s_MPBranchFileName);
 
 	//--------------------------------------------------------------------------//
 	//Adding all the books in the CheckedOut file to the static patronList object.
 	//--------------------------------------------------------------------------//
-	if (checkedOut_ifstream.is_open())
+	while (getline(checkedOutStream, line))
 	{
-		while (getline(checkedOut_ifstream, line))
-		{
-			stringstream ss(line);
-			getline(ss, word, ',');
-			title = word;
-			getline(ss, word, ',');
-			author = word;
-			getline(ss, word, ',');
-			patronName = word;
-			s_checkedOutObject.checkOut(title, author, patronName);
-		}
+		std::stringstream ss(line);
+		getline(ss, word, ',');
+		title = word;
+		getline(ss, word, ',');
+		author = word;
+		getline(ss, word, ',');
+		patronName = word;
+		s_checkedOutObject.checkOut(title, author, patronName);
 	}
-	else
-	{
-		cout << "**ERROR opening file**" << endl;
-	}
-	
 
 	//--------------------------------------------------------------------//
 	//Adding all the books in CentralBranch file to a static library object.
 	//--------------------------------------------------------------------//
-	if (CentralBranch_ifstream.is_open())
+	while (getline(CentralBranchStream, line))
 	{
-		while (getline(CentralBranch_ifstream, line))
-		{
-			stringstream ss(line);
-			getline(ss, word, ',');
-			title = word;
-			getline(ss, word, ',');
-			author = word;
-			s_CentralBranchObject.addBook(title, author);
-		}
-	}
-	else
-	{
-		cout << "**ERROR opening file**" << endl;
+		std::stringstream ss(line);
+		getline(ss, word, ',');
+		title = word;
+		getline(ss, word, ',');
+		author = word;
+		s_CentralBranchObject.addBook(title, author);
 	}
 
 	//---------------------------------------------------------------------//
 	//Adding all the books in PointGreyBranch file to a static library object.
 	//---------------------------------------------------------------------//
-	if (PGBranch_ifstream.is_open())
+	while (getline(PGBranchStream, line))
 	{
-		while (getline(PGBranch_ifstream, line))
-		{
-			stringstream ss(line);
-			getline(ss, word, ',');
-			title = word;
-			getline(ss, word, ',');
-			author = word;
-			s_PGBranchObject.addBook(title, author);
-		}
-	}
-	else
-	{
-		cout << "**ERROR opening file**" << endl;
+		std::stringstream ss(line);
+		getline(ss, word, ',');
+		title = word;
+		getline(ss, word, ',');
+		author = word;
+		s_PGBranchObject.addBook(title, author);
 	}
 
 	//--------------------------------------------------------------------------//
 	//Adding all the books in MountPleasantBranch file to a static library object.
 	//--------------------------------------------------------------------------//
-	if (MPBranch_ifstream.is_open())
+	while (getline(MPBranchStream, line))
 	{
-		while (getline(MPBranch_ifstream, line))
-		{
-			stringstream ss(line);
-			getline(ss, word, ',');
-			title = word;
-			getline(ss, word, ',');
-			author = word;
-			s_MPBranchObject.addBook(title, author);
-		}
+		std::stringstream ss(line);
+		getline(ss, word, ',');
+		title = word;
+		getline(ss, word, ',');
+		author = word;
+		s_MPBranchObject.addBook(title, author);
 	}
-	else
-	{
-		cout << "**ERROR opening file**" << endl;
-	}
-	
 
-	checkedOut_ifstream.close();
-	CentralBranch_ifstream.close();
-	PGBranch_ifstream.close();
-	MPBranch_ifstream.close();
+	checkedOutStream.close();
+	CentralBranchStream.close();
+	PGBranchStream.close();
+	MPBranchStream.close();
 }
 
 /*
 Used in a separate thread from the main function, writes back the dynamic instances of every book back into
-their respective files. The objects are then reinitialized. This action cleans up the deleted books by not 
-writing back books with true delete flags. While this function isn't particularly useful for this program, 
-if the solution were scaled up to the size of an actual and was being accessed by multiple computers actually
-manage a library system, this writeback would be important.
-people, this would be necessary.
+their respective files. The objects are then reinitialized. This action cleans up the deleted books by not
+writing back books with true delete flags. If the solution were scaled up to the size of an actual library
+and was being accessed by multiple computers, this writeback would be important.
 */
 void writebackAndReinitialize(void)
 {
@@ -1017,13 +893,9 @@ Flow of case statements and getlines that control the system based on inputs fro
 */
 void cmdWindowControl(void)
 {
-	string select;
-	string entered;
-	string title;
-	string author;
-	string patron;
-	char select_char;
-	
+	std::string select, entered, title, author, patron;
+	char selectChar;
+
 	//---------------------------------------------------------------------//
 	//When starting, or returning to start, check if any flags are up.
 	//
@@ -1035,56 +907,54 @@ void cmdWindowControl(void)
 start:
 	if (s_spreadsheetWritebackFlag)
 	{
-		cout << "\n\n\n";
-		cout << "          ***Spreadsheets have been updated***" << endl;
-		cout << "\n\n\n";
+		std::cout << "\n\n\n";
+		std::cout << "          ***Spreadsheets have been updated***" << std::endl;
+		std::cout << "\n\n\n";
 		s_spreadsheetWritebackFlag = false;
 	}
 	if (s_CentralBranchBooksShelvedFlag)
 	{
-		cout << "\n\n\n";
-		cout << "          ***Returned books have been shelved at the central branch***" << endl;
-		cout << "\n\n\n";
+		std::cout << "\n\n\n";
+		std::cout << "          ***Returned books have been shelved at the central branch***" << std::endl;
+		std::cout << "\n\n\n";
 		s_CentralBranchBooksShelvedFlag = false;
 	}
 	if (s_PGBranchBooksShelvedFlag)
 	{
-		cout << "\n\n\n";
-		cout << "          ***Returned books have been shelved at the Point Grey branch***" << endl;
-		cout << "\n\n\n";
+		std::cout << "\n\n\n";
+		std::cout << "          ***Returned books have been shelved at the Point Grey branch***" << std::endl;
+		std::cout << "\n\n\n";
 		s_PGBranchBooksShelvedFlag = false;
 	}
 	if (s_MPBranchBooksShelvedFlag)
 	{
-		cout << "\n\n\n";
-		cout << "          ***Returned books have been shelved at the Mount Pleasant branch***" << endl;
-		cout << "\n\n\n";
+		std::cout << "\n\n\n";
+		std::cout << "          ***Returned books have been shelved at the Mount Pleasant branch***" << std::endl;
+		std::cout << "\n\n\n";
 		s_MPBranchBooksShelvedFlag = false;
 	}
-	cout << "          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
-	cout << "          Check out book:                                            (enter 1)" << endl;
-	cout << "          View catalogue:                                            (enter 2)" << endl;
-	cout << "          Return book:                                               (enter 3)" << endl;
-	cout << "          Quit the application:                                      (enter 4)" << endl;
-	cout << "          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
+	std::cout << "          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+	std::cout << "          Check out book:                                            (enter 1)" << std::endl;
+	std::cout << "          view catalogue:                                            (enter 2)" << std::endl;
+	std::cout << "          Return book:                                               (enter 3)" << std::endl;
+	std::cout << "          Quit the application:                                      (enter 4)" << std::endl;
+	std::cout << "          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
 
 	//-----------------------------------------------------------------------------------------------//
-	//Program needs '\n' as a delimiter or else an invalid entry could send the program into an 
-	//infinite loop because it won't pause for the user to input a new value before reading using cin.
-	//
-	//I know there are other ways to solve this issue.
-	//But, the following logic allows me the ease of use of getline, with a switch statement.
+	//start_input:
+	//recieves input from the user then sends the to either check out a book, view the catalogue,
+	//or return a book.
 	//-----------------------------------------------------------------------------------------------//
 start_input:
-	getline(cin, select, '\n');
+	getline(std::cin, select, '\n');
 	if (select.length() != 1)
 	{
-		cout << "          Invalid entry, try again:" << endl;
+		std::cout << "          Invalid entry, try again:" << std::endl;
 		goto start_input;
 	}
-	select_char = select[0]; //Because a switch statement can't use strings.
+	selectChar = select[0]; //Because a switch statement can't use strings.
 
-	switch (select_char)
+	switch (selectChar)
 	{
 	case '1':
 		goto check_out;
@@ -1095,7 +965,7 @@ start_input:
 	case '4':
 		return;
 	default:
-		cout << "          invalid entry, try again:" << endl;
+		std::cout << "          invalid entry, try again:" << std::endl;
 		goto start_input;
 	}
 
@@ -1111,37 +981,37 @@ start_input:
 	//data in objects that could be written back and reinitialized.
 	//----------------------------------------------------------------------//
 check_out:
-	cout << "          Enter the title, author, then the patron checking the book out." << endl;
-	cout << "title: ";
-	getline(cin, entered, '\n');
+	std::cout << "          Enter the title, author, then the patron checking the book out." << std::endl;
+	std::cout << "title: ";
+	getline(std::cin, entered, '\n');
 	title = entered;
-	cout << "author: ";
-	getline(cin, entered, '\n');
+	std::cout << "author: ";
+	getline(std::cin, entered, '\n');
 	author = entered;
-	cout << "patron: ";
-	getline(cin, entered, '\n');
+	std::cout << "patron: ";
+	getline(std::cin, entered, '\n');
 	patron = entered;
-	cout << endl;
+	std::cout << std::endl;
 
 	s_mu.lock();
 	if (s_CentralBranchObject.deleteBook(title, author))
 	{
 		s_checkedOutObject.checkOut(title, author, patron);
-		cout << title << " by " << author << " checked out from the Central branch by " << patron << "." << endl;
+		std::cout << title << " by " << author << " checked out from the Central branch by " << patron << "." << std::endl;
 	}
 	else if (s_PGBranchObject.deleteBook(title, author))
 	{
 		s_checkedOutObject.checkOut(title, author, patron);
-		cout << title << " by " << author << " checked out from the Point Grey branch by " << patron << "." << endl;
+		std::cout << title << " by " << author << " checked out from the Point Grey branch by " << patron << "." << std::endl;
 	}
-	else if(s_MPBranchObject.deleteBook(title, author)) 
+	else if (s_MPBranchObject.deleteBook(title, author))
 	{
 		s_checkedOutObject.checkOut(title, author, patron);
-		cout << title << " by " << author << " checked out from the Mount Pleasant branch by " << patron << "." << endl;
+		std::cout << title << " by " << author << " checked out from the Mount Pleasant branch by " << patron << "." << std::endl;
 	}
 	else
 	{
-		cout << "          The book entered is not available at any of our libraries";
+		std::cout << "          The book entered is not available at any of our libraries";
 	}
 	s_mu.unlock();
 	goto start; //Return to start.
@@ -1156,23 +1026,23 @@ check_out:
 	//data in objects that could be written back and reinitialized.
 	//------------------------------------------------------------------//
 view_catalogue:
-	cout << "          Enter whether the catalogue should be in alphabetical order of 'title' or 'author':" << endl;
+	std::cout << "          Enter whether the catalogue should be in alphabetical order of 'title' or 'author':" << std::endl;
 view_catalogue_entry:
-	getline(cin, entered, '\n');
+	getline(std::cin, entered, '\n');
 	if ((entered != "title") && (entered != "author"))
 	{
-		cout << "          Invalid entry, please enter 'title' or 'author':" << endl;
+		std::cout << "          Invalid entry, please enter 'title' or 'author':" << std::endl;
 		goto view_catalogue_entry;
 	}
 	s_mu.lock();
-	cout << "\n\n";
-	cout << "The books at the Central branch are:" << endl;
+	std::cout << "\n\n";
+	std::cout << "The books at the Central branch are:" << std::endl;
 	s_CentralBranchObject.printList(entered);
-	cout << "\n\n";
-	cout << "The books at the Point Grey branch are:" << endl;
+	std::cout << "\n\n";
+	std::cout << "The books at the Point Grey branch are:" << std::endl;
 	s_PGBranchObject.printList(entered);
-	cout << "\n\n";
-	cout << "The books at the Mount Pleasant branch are:" << endl;
+	std::cout << "\n\n";
+	std::cout << "The books at the Mount Pleasant branch are:" << std::endl;
 	s_PGBranchObject.printList(entered);
 	s_mu.unlock();
 	goto start; //Return to start.
@@ -1181,7 +1051,7 @@ view_catalogue_entry:
 
 	//------------------------------------------------------------------//
 	//return_book:
-	//prints the patrons and what books the have checked out,
+	//prints the patrons and what books they have checked out,
 	//then the user inputs what title and author is being returned.
 	//if the book entered is valid, the user also chooses which 
 	//library the book is being returned to. The book is then
@@ -1192,15 +1062,15 @@ view_catalogue_entry:
 	//data in objects that could be written back and reinitialized.
 	//------------------------------------------------------------------//
 return_book:
-	cout << "          The following patrons have the following books checked out." << endl;
+	std::cout << "          The following patrons have the following books checked out." << std::endl;
 	s_checkedOutObject.printList("title");
-	cout << "          Enter the title, author, and library being returned to." << endl;
+	std::cout << "          Enter the title, author, and library being returned to." << std::endl;
 return_book_entry:
-	cout << "title: ";
-	getline(cin, entered, '\n');
+	std::cout << "title: ";
+	getline(std::cin, entered, '\n');
 	title = entered;
-	cout << "author: ";
-	getline(cin, entered, '\n');
+	std::cout << "author: ";
+	getline(std::cin, entered, '\n');
 	author = entered;
 
 	s_mu.lock();
@@ -1209,16 +1079,16 @@ return_book_entry:
 
 	if (temp)
 	{
-		cout << "          Invalid book entry, please try again:" << endl;
+		std::cout << "          Invalid book entry, please try again:" << std::endl;
 		goto return_book_entry;
 	}
 
 book_entry_library:
-	cout << "enter 'Central', 'Point Grey', or 'Mount Pleasant' to select the library:";
-	getline(cin, entered, '\n');
+	std::cout << "enter 'Central', 'Point Grey', or 'Mount Pleasant' to select the library:";
+	getline(std::cin, entered, '\n');
 	if ((entered != "Central") && (entered != "Point Grey") && (entered != "Mount Pleasant"))
 		goto book_entry_library;
-	
+
 	s_mu.lock();
 	if (entered == "Central")
 		s_CentralBranchObject.bookReturned(title, author);
@@ -1227,6 +1097,6 @@ book_entry_library:
 	else
 		s_MPBranchObject.bookReturned(title, author);
 	s_mu.unlock();
-	cout << title << " by " << author << " returned to " << entered << " branch." << endl;
+	std::cout << title << " by " << author << " returned to " << entered << " branch." << std::endl;
 	goto start;//return to start.
 }

@@ -7,8 +7,6 @@ date updated:	September 12th, 2021
 #include <fstream>
 #include <string>
 
-using namespace std;
-
 void printPuzzle(int puzzle[9][9]);
 bool isSolved(int puzzle[9][9]);
 bool duplicates(int array[9]);
@@ -18,33 +16,23 @@ int nextColumn(int row_num, int column_num);
 bool solveSudoku(int puzzle[9][9], int row_num, int column_num);
 
 /*
-Objects of sudokuNode class function as storage for information on a specific sudoku
-puzzle, and as nodes in a linked list.
+	class description:
+	Objects of sudokuNode class function as storage for information on a specific sudoku
+	puzzle, and as nodes in a linked list.
 
-*** IMPORTANT ***
- - The information that fills the properties of sudokuNode comes from text files, the file
-name of which is a parameter to the assignPuzzle method.
- - The reason assignPuzzle isn't part of a constructor is so that objects of sudokuNode can be
-allocated before the program knows what file name to assign.
- - Instead, the properties are declared to a default value.
- - The boolean property 'puzzleAssignedFlag' is used to restrain the program from
- doing actions on properties of sudokuNode if they are not assigned.
-
-Encapuslation is used such that the program/user only has the access/ability to:
-  - (property) the pointer to the next sudokuNode, for linked list implementation.
-  - (method)   assign the puzzle once (once a sudokuNode is assigned values, those values cannot be reassigned).
-  - (method)   display the unsolved puzzle stored in sudokuNode.
-  - (method)   display the solved puzzle stored in sudokuNode.
-  - (method)   copy the solved sudoku into an array. The values at the actual memory location that stores the solved puzzle cannot be modified.
-  - (method)   return the puzzle name (or file name) of the puzzle.
+	important info:
+	 - The information that fills the properties of sudokuNode comes from text files, the file
+	name of which is a parameter to the assignPuzzle function.
+	 - The reason assignPuzzle isn't part of a constructor is so that objects of sudokuNode can be
+	allocated before the program knows what file name to assign.
+	 - Instead, the properties are declared to a default value.
+	 - The boolean property 'puzzleAssignedFlag' is used to restrain the program from
+	 doing actions on properties of sudokuNode if they are not assigned.
 */
 class sudokuNode
 {
 private:
-	//-------------------------------------------//
-	//Private properties defined to default values.
-	//-------------------------------------------//
-	string puzzlename = "";
+	std::string puzzlename = "";
 	bool puzzleAssignedFlag = false;
 	int puzzle_unsolved[9][9] = { -1 };
 	int puzzle_solved[9][9] = { -1 };
@@ -53,32 +41,29 @@ public:
 	sudokuNode* next = NULL;
 
 	/*
-	Fills the properties of sudokuNode object with values that are determined from
-	a text file. The text file is found by its name through the parameter 'puzzleName'
-	and is formatted as nine lines of nine values (from 0-9) seperated by spaces,
-	where '0' represents an empty space.
+		function description:
+		Fills the properties of sudokuNode object with values that are determined from
+		a text file. The text file is found by its name through the parameter 'puzzleName'
+		and is formatted as nine lines of nine values (from 0-9) seperated by spaces,
+		where '0' represents an empty space.
 
-	PARAM: String puzzleName: represents the file name of a text file that contains
-	a sudoku puzzle.
+		PARAM: String puzzleName: represents the file name of a text file that contains
+		a sudoku puzzle.
 	*/
-	void assignPuzzle(string puzzleName)
+	void assignPuzzle(std::string puzzleName)
 	{
 		int number = -1;
 		bool errFlag = false;
 
-		//-----------------------------------------------------------------------//
-		//Only allows object to be assigned if it has not been assigned previously.
-		//-----------------------------------------------------------------------//
+		//Only allow object to be assigned if it has not been assigned previously.
 		if (!puzzleAssignedFlag)
 		{
 			puzzlename = puzzleName;
 
-			//---------------------------------------------------------------//
-			//If file opens properly, assigns the values from the text file to
+			//If file opens properly, assign the values from the text file to
 			//both puzzle_unsolved and puzzle_solved.
-			//---------------------------------------------------------------//
-			string filename = puzzleName + ".txt";
-			ifstream sudokuFile;
+			std::string filename = puzzleName + ".txt";
+			std::ifstream sudokuFile;
 			sudokuFile.open(filename);
 
 			if (sudokuFile.is_open())
@@ -96,17 +81,12 @@ public:
 			}
 			else
 			{
-				//-------------------------------------------------------------------//
 				//If file does not open properly, print an error and put up error flag.
-				//-------------------------------------------------------------------//
-				cout << "**Error opening file**" << endl;
+				std::cout << "**Error opening file**" << std::endl;
 				errFlag = true;
 			}
 
-			//---------------------------------------------------------------------------------------//
-			//Only if there were no errors reading from the file, is puzzle_solved solved by algorithm
-			//and assigned flag is put up.
-			//---------------------------------------------------------------------------------------//
+			//If there were no errors reading from the file, puzzle_solved is solved by algorithm
 			if (!errFlag)
 			{
 				solveSudoku(puzzle_solved, 0, 0);
@@ -116,37 +96,40 @@ public:
 	}
 
 	/*
-	If the puzzle has been assigned, calls printPuzzle on the puzzle_unsolved array.
+		function description:
+		If the puzzle has been assigned, calls printPuzzle on the puzzle_unsolved array.
 	*/
 	void displayUnsolvedPuzzle(void)
 	{
-		cout << "\n";
+		std::cout << std::endl;
 		if (puzzleAssignedFlag)
 		{
 			printPuzzle(puzzle_unsolved);
 		}
 		else
-			cout << "**Error: Program attempted to access puzzle that has not been assigned**" << endl;
+			std::cout << "**Error: Program attempted to access puzzle that has not been assigned**" << std::endl;
 	}
 
 	/*
-	If the puzzle has been assigned, calls printPuzzle on the puzzle_solved array.
+		function description:
+		If the puzzle has been assigned, calls printPuzzle on the puzzle_solved array.
 	*/
 	void displaySolvedPuzzle(void)
 	{
-		cout << "\n";
+		std::cout << std::endl;
 		if (puzzleAssignedFlag)
 		{
 			printPuzzle(puzzle_solved);
 		}
 		else
-			cout << "**Error: Program attempted to access puzzle that has not been assigned**" << endl;
+			std::cout << "**Error: Program attempted to access puzzle that has not been assigned**" << std::endl;
 	}
 
 	/*
-	If the puzzle has been assigned, copies the values from puzzle_solved into parameter puzzle.
+		function description:
+		If the puzzle has been assigned, copies the values from puzzle_solved into the puzzle parameter.
 
-	PARAM: 9x9 integer array puzzle[9][9]: representation of solved puzzle copied to it.
+		PARAM: 9x9 integer array puzzle[9][9]: solved puzzle copied to this parameter.
 	*/
 	void getSolvedPuzzle(int puzzle[9][9])
 	{
@@ -161,15 +144,16 @@ public:
 			}
 		}
 		else
-			cout << "**Error: Program attempted to access puzzle that has not been assigned**" << endl;
+			std::cout << "**Error: Program attempted to access puzzle that has not been assigned**" << std::endl;
 	}
 
 	/*
-	If the puzzle has been assigned, returns the puzzlename.
+		function description
+		If the puzzle has been assigned, returns the puzzlename.
 
-	RETURN: string representing name of puzzle.
+		RETURN: string representing name of puzzle.
 	*/
-	string getPuzzleName(void)
+	std::string getPuzzleName(void)
 	{
 		if (puzzleAssignedFlag)
 		{
@@ -177,7 +161,7 @@ public:
 		}
 		else
 		{
-			cout << "**Error: Program attempted to access puzzle that has not been assigned**" << endl;
+			std::cout << "**Error: Program attempted to access puzzle that has not been assigned**" << std::endl;
 			return "";
 		}
 
@@ -185,22 +169,16 @@ public:
 };
 
 /*
-The sudokuList class does all operations that allocate, traverse, access data from, and deallocate
-from a linked list of sudokuNodes.
+	class description:
+	The sudokuList class does all operations that allocate, traverse, access data from, and deallocate
+	from a linked list of sudokuNodes.
 
-The goal with the sudokuList class was to cover up as much as possible, so that any actions done
-relating to the actual puzzles in the program are done through calls to methods of sudokuList.
+	The goal with the sudokuList class was to cover up as much as possible, so that any actions done
+	relating to the actual puzzles in the program are done through calls funcitons of sudokuList.
 
-*** IMPORTANT ***
-There is a text file FilenameList.txt that is hardcoded in this class which has the file names
-of all the sudoku text files that need to be added to the linked list.
-
-Encapuslation is used such that the program/user only has the access/ability to:
- - (method) add a sudoku puzzle to the linked list (creates its own text file, and adds its name to FilenameList.txt).
- - (method) display a the file names of all the sudoku puzzles in the list.
- - (method) display a solved sudoku selected by the user (calls displaySolvedPuzzle() from sudokuNode object).
- - (method) display an unsolved sudoku selected by the user (calls displayUnsolvedPuzzle() from sudokuNode object).
- - (method) checks a users solution against a sudoku currently in the list.
+	important info:
+	There is a text file FilenameList.txt that is hardcoded in this class which has the file names
+	of all the sudoku text files that need to be added to the linked list.
 */
 class sudokuList
 {
@@ -208,19 +186,18 @@ private:
 	sudokuNode* head;
 
 	/*
-	Finds whether a puzzle with a given name is in the linked list.
+		function description:
+		Finds whether a puzzle with a given name is in the linked list.
 
-	PARAM: string puzzleName: the name of the puzzle being searched for.
-	RETURN: sudokuNode pointer, the address of the puzzle being searched for if found, or NULL if no puzzle was found with the provided name.
+		PARAM: string puzzleName: the name of the puzzle being searched for.
+		RETURN: sudokuNode pointer, the address of the puzzle being searched for if found, or NULL if no puzzle was found with the provided name.
 	*/
-	sudokuNode* findPuzzle(string puzzleName)
+	sudokuNode* findPuzzle(std::string puzzleName)
 	{
 		sudokuNode* traversal = head;
 
-		//--------------------------------------------------------------------------------------------------------------//
 		//Checks each node in the linked list to see if the puzzleName parameter matches the puzzleName of the node
 		//and returns a pointer to that node if it does. Returns the NULL pointer if a node with puzzleName was not found.
-		//--------------------------------------------------------------------------------------------------------------//
 		if (puzzleName == traversal->getPuzzleName())
 		{
 			return traversal;
@@ -241,19 +218,17 @@ private:
 
 public:
 	/*
-	SudokuList constructor:
-	Creates the head node for the list, and fills in the linked list with all the
-	puzzles specified in the FilenameList.txt file.
+		function description:
+		Creates the head node for the list, and fills in the linked list with all the
+		puzzles specified in the FilenameList.txt file.
 	*/
 	sudokuList(void)
 	{
-		string puzzleName;
-		ifstream sudokuListFile;
+		std::string puzzleName;
+		std::ifstream sudokuListFile;
 
-		//------------------------------------------------------------------------//
 		//Defines the head node pointer, allocates the head node,
 		//and assigns it the puzzle specified by the first line in FilenameList.txt.
-		//------------------------------------------------------------------------//
 		sudokuNode* newNode;
 		sudokuNode* traversalNode;
 		head = new sudokuNode;
@@ -264,10 +239,8 @@ public:
 		head->assignPuzzle(puzzleName);
 		traversalNode = head;
 
-		//------------------------------------------------------//
 		//Iterates through all lines in the FilenameList.txt file, 
 		//allocating and assigning nodes of sudokuNode.
-		//------------------------------------------------------//
 		while (getline(sudokuListFile, puzzleName))
 		{
 			newNode = new sudokuNode;
@@ -278,81 +251,69 @@ public:
 	}
 
 	/*
-	Adds a sudoku inputted by the user to the linked list, creates a text file representation
-	of the puzzle, and adds the file name of that puzzle to the FilenameList.txt.
+		function description:
+		Adds a sudoku input by the user to the linked list, creates a text file representation
+		of the puzzle, and adds the file name of that puzzle to the FilenameList.txt.
 	*/
 	void addSudoku(void)
 	{
-		string line;
-		string filename;
-		ofstream sudokuListFile;
-		ofstream sudokuFile;
+		std::string line, filename;
+		std::ofstream sudokuListFile, sudokuFile;
 		sudokuNode* traversal;
-		int length;
-		int puzzle[9][9];
-		int puzzleCheckSolved[9][9];
+		int length, j;
+		int puzzle[9][9], puzzleCheckSolved[9][9];
 		const char* digit;
 
-		int j; //Being used outside of the for loop iterating through it, so must be defined before (line 365).
-
-		//------------------------------------------------------------------------------------------------//
 		//Recieves input from the user for both the name of the sudoku, and the values in the sudoku.
 		//Inludes error handling for if the sudoku file is a duplicate name, and if invalid lines are given.
-		//------------------------------------------------------------------------------------------------//
-		cout << "          Enter sudoku file name:" << endl;
+		std::cout << "          Enter sudoku file name:" << std::endl;
 	get_sudoku_name:
-		getline(cin, filename, '\n');
+		getline(std::cin, filename, '\n');
 		if (findPuzzle(filename) != NULL)
 		{
-			cout << "          System already has a sudoku with that name, please put in a different file name:" << endl;
+			std::cout << "          System already has a sudoku with that name, please put in a different file name:" << std::endl;
 			goto get_sudoku_name;
 		}
 
-		cout << "          NOTE: all lines of sudoku puzzle must be entered as 9 integer values seperated by spaces, '0' represents an empty square." << endl;
-		cout << "          Enter sudoku puzzle:" << endl;
+		std::cout << "          NOTE: all lines of sudoku puzzle must be entered as 9 integer values seperated by spaces, '0' represents an empty square." << std::endl;
+		std::cout << "          Enter sudoku puzzle:" << std::endl;
 
 		for (int i = 0; i < 9; i++)
 		{
 		read_line_addSudoku:
-			getline(cin, line, '\n');
+			getline(std::cin, line, '\n');
 			for (int j = 0; j < 9; j++)
 			{
 				length = line.length();
 				if (length != 17)
 				{
-					cout << "          Entry invalid length, try again:" << endl;
+					std::cout << "          Entry invalid length, try again:" << std::endl;
 					goto read_line_addSudoku;
 				}
 
 				digit = &line[j * 2];
 				try
 				{
-					puzzle[i][j] = stoi(digit);
-					puzzleCheckSolved[i][j] = stoi(digit);
+					puzzle[i][j] = std::stoi(digit);
+					puzzleCheckSolved[i][j] = std::stoi(digit);
 				}
-				catch (invalid_argument)
+				catch (std::invalid_argument)
 				{
-					cout << "          Invalid entry, try again:" << endl;
+					std::cout << "          Invalid entry, try again:" << std::endl;
 					goto read_line_addSudoku;
 				}
 			}
 		}
 
-		//--------------------------------------------------------------------------------------------------------------------------//
+
 		//Checks to see whether the puzzle is acutally solveable, and only adds the puzzle to the system if it is.
-		//
-		//Additionally, note that solveSudoku calls 'puzzleCheckSolved' instead of 'puzzle' because if puzzle is called and 
-		//solved correctly, a solved version would be copied into the text file and linked list when it should be an unsolved version.
-		//--------------------------------------------------------------------------------------------------------------------------//
 		if (!solveSudoku(puzzleCheckSolved, 0, 0))
 		{
-			cout << "**ERROR: Sudoku entered does not have a solution, it has not been added to the system**" << endl;
+			std::cout << "**ERROR: Sudoku entered does not have a solution, it has not been added to the system**" << std::endl;
 		}
 		else
 		{
-			//--------------------------------------------------------------------------------------------------------//
 			//Creates a sudoku file with the file name given by the user that contains the unsolved puzzle they entered.
-			//--------------------------------------------------------------------------------------------------------//
 			sudokuFile.open(filename + ".txt");
 			if (sudokuFile.is_open())
 			{
@@ -362,25 +323,21 @@ public:
 					{
 						sudokuFile << puzzle[i][j] << " ";
 					}
-					sudokuFile << puzzle[i][j] << endl;
+					sudokuFile << puzzle[i][j] << std::endl;
 				}
 				sudokuFile.close();
 			}
 
-			//---------------------------------------------------//
 			//Appends the file name into the FilenameList.txt file.
-			//---------------------------------------------------//
-			sudokuListFile.open("FilenameList.txt", ios::app);
+			sudokuListFile.open("FilenameList.txt", std::ios::app);
 			if (sudokuListFile.is_open())
 			{
 				sudokuListFile << "\n" << filename;
 				sudokuListFile.close();
 			}
 
-			//-----------------------------------------------------------------------------//
 			//Allocates and assigns a new sudokuNode with the information given by the user,
 			//and traverses through the linked list to add it to the end.
-			//-----------------------------------------------------------------------------//
 			traversal = head;
 			while (traversal->next != NULL)
 			{
@@ -390,30 +347,32 @@ public:
 			traversal = traversal->next;
 			traversal->assignPuzzle(filename);
 
-			cout << "           " << filename << " has been successfully added!" << endl;
+			std::cout << "           " << filename << " has been successfully added!" << std::endl;
 		}
 	}
 
 	/*
-	Displays the names of all puzzles in the linked list.
+		function description:
+		Displays the names of all puzzles in the linked list.
 	*/
 	void displayPuzzleNames(void)
 	{
 		sudokuNode* traversal = head;
-		string name;
+		std::string name;
 
 		while (traversal != NULL)
 		{
 			name = traversal->getPuzzleName();
-			cout << name << endl;
+			std::cout << name << std::endl;
 			traversal = traversal->next;
 		}
 	}
 
 	/*
-	Displays the unsolved representation of a puzzle in the linked list specified by the parameter puzzleName.
+		function description:
+		Displays the unsolved representation of a puzzle in the linked list.
 	*/
-	void displayUnsolved(string puzzleName)
+	void displayUnsolved(std::string puzzleName)
 	{
 		sudokuNode* sudoku;
 		sudoku = findPuzzle(puzzleName);
@@ -423,15 +382,16 @@ public:
 		}
 		else
 		{
-			cout << endl << "**Sudoku with that name was not found**" << endl;
+			std::cout << std::endl << "**Sudoku with that name was not found**" << std::endl;
 		}
 	}
 
 
 	/*
-	Displays the solved representation of a puzzle in the linked list specified by the parameter puzzleName.
+		function description:
+		Displays the solved representation of a puzzle in the linked list.
 	*/
-	void displaySolved(string puzzleName)
+	void displaySolved(std::string puzzleName)
 	{
 		sudokuNode* sudoku;
 		sudoku = findPuzzle(puzzleName);
@@ -441,79 +401,76 @@ public:
 		}
 		else
 		{
-			cout << endl << "**Sudoku with that name was not found**" << endl;
+			std::cout << std::endl << "**Sudoku with that name was not found**" << std::endl;
 		}
 	}
 
 	/*
-	Checks a user entered sudoku solution against the actual solution of a sudoku specified
-	by the puzzleName parameter, and informs the user whether they solved the puzzle correctly.
+		function description:
+		Checks a user entered sudoku solution against the actual solution of a sudoku specified
+		by the puzzleName parameter, and informs the user whether they solved the puzzle correctly.
 	*/
-	void checkSudoku(string puzzleName)
+	void checkSudoku(std::string puzzleName)
 	{
 		sudokuNode* sudoku;
 		int puzzle[9][9];
 		int length;
 		const char* digit;
-		string line;
+		std::string line;
 		bool wrongFlag = false;
 
 
 		sudoku = findPuzzle(puzzleName);
 		sudoku->getSolvedPuzzle(puzzle);
 
-		cout << "          NOTE: all lines of sudoku puzzle must be entered as 9 integer values seperated by spaces, '0' represents an empty square." << endl;
-		cout << "          Enter sudoku puzzle:" << endl;
+		std::cout << "          NOTE: all lines of sudoku puzzle must be entered as 9 integer values seperated by spaces, '0' represents an empty square." << std::endl;
+		std::cout << "          Enter sudoku puzzle:" << std::endl;
 
-		//--------------------------------------------------------------------------------------------//
 		//Reads the inputs from the user and converts them to integers to be checked against the array,
 		//has error handling for if the input is invalid.
-		//--------------------------------------------------------------------------------------------//
 		for (int i = 0; i < 9; i++)
 		{
 		read_line_checkSudoku:
-			getline(cin, line);
+			getline(std::cin, line);
 			for (int j = 0; j < 9; j++)
 			{
 				length = line.length();
 				if (length != 17)
 				{
-					cout << "          Entry invalid length, try again:" << endl;
+					std::cout << "          Entry invalid length, try again:" << std::endl;
 					goto read_line_checkSudoku;
 				}
 				digit = &line[j * 2];
 
 				try
 				{
-					if (puzzle[i][j] != stoi(digit))
+					if (puzzle[i][j] != std::stoi(digit))
 					{
 						wrongFlag = true;
 					}
 				}
-				catch (invalid_argument)
+				catch (std::invalid_argument)
 				{
-					cout << "          Invalid entry, try again:" << endl;
+					std::cout << "          Invalid entry, try again:" << std::endl;
 					goto read_line_checkSudoku;
 				}
 			}
 		}
 
-		//---------------------------------------------------------------------------//
 		//Does not inform the user whether the puzzle they entered was incorrect until
 		//every line has been entered. If the wrongFlag stays down, it means every 
 		//entry was correct, and the user is informed.
-		//---------------------------------------------------------------------------//
 		if (!wrongFlag)
 		{
-			cout << "          Congragulations, that was the correct solution!" << endl;
+			std::cout << "          Congragulations, that was the correct solution!" << std::endl;
 		}
 		else
-			cout << "          Unfortunately, that was the incorrect solution." << endl;
+			std::cout << "          Unfortunately, that was the incorrect solution." << std::endl;
 	}
 
 	/*
-	SudokuList deconstructor:
-	Deallocates all the memory in the linked list.
+		function description:
+		Deallocate all the memory in the linked list.
 	*/
 	~sudokuList(void)
 	{
@@ -535,9 +492,9 @@ public:
 
 int main(void)
 {
-	string select;
+	std::string select;
 	char select_char;
-	string name;
+	std::string name;
 	sudokuList list;
 
 	//------------------------------------------------------------------------------------------------------------//
@@ -545,12 +502,12 @@ int main(void)
 	//user inputs what action they would like to do, program uses switch statment and goto to branch to that location.
 	//------------------------------------------------------------------------------------------------------------//
 start:
-	cout << "          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
-	cout << "          Add an unsolved sudoku:                                    (enter 1)" << endl;
-	cout << "          Solve a sudoku currently in the system:                    (enter 2)" << endl;
-	cout << "          View a solved sudoku:                                      (enter 3)" << endl;
-	cout << "          Quit the application:                                      (enter 4)" << endl;
-	cout << "          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
+	std::cout << "          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+	std::cout << "          Add an unsolved sudoku:                                    (enter 1)" << std::endl;
+	std::cout << "          Solve a sudoku currently in the system:                    (enter 2)" << std::endl;
+	std::cout << "          View a solved sudoku:                                      (enter 3)" << std::endl;
+	std::cout << "          Quit the application:                                      (enter 4)" << std::endl;
+	std::cout << "          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
 
 	//-----------------------------------------------------------------------------------------------//
 	//Program needs '\n' as a delimiter or else an invalid entry could send the program into an 
@@ -560,10 +517,10 @@ start:
 	//But, the following logic allows me the ease of use of getline, with a switch statement.
 	//-----------------------------------------------------------------------------------------------//
 start_input:
-	getline(cin, select, '\n');
+	getline(std::cin, select, '\n');
 	if (select.length() != 1)
 	{
-		cout << "          Invalid entry, try again:" << endl;
+		std::cout << "          Invalid entry, try again:" << std::endl;
 		goto start_input;
 	}
 	select_char = select[0]; //Because a switch statement can't use strings.
@@ -579,7 +536,7 @@ start_input:
 	case '4':
 		goto quit;
 	default:
-		cout << "          invalid entry, try again:" << endl;
+		std::cout << "          invalid entry, try again:" << std::endl;
 		goto start_input;
 	}
 
@@ -603,12 +560,12 @@ add_sudoku:
 	//then the displayUnsolved method is called to show what the unsolved version is before branching to check_sudoku.
 	//--------------------------------------------------------------------------------------------------------------//
 solve_sudoku:
-	cout << "          Type the name of the sudoku you would like to solve from the following list:" << endl;
+	std::cout << "          Type the name of the sudoku you would like to solve from the following list:" << std::endl;
 	list.displayPuzzleNames();
-	cout << endl;
-	getline(cin, name, '\n');
+	std::cout << std::endl;
+	getline(std::cin, name, '\n');
 	list.displayUnsolved(name);
-	cout << "\n\n";
+	std::cout << "\n\n";
 	goto check_sudoku;
 
 
@@ -620,10 +577,10 @@ solve_sudoku:
 	//then program branches to display_solved_sudoku.
 	//-------------------------------------------------------------------------------------------//
 view_solved_sudoku:
-	cout << "          Type the value of the sudoku you would like view solved from the following list:" << endl;
+	std::cout << "          Type the value of the sudoku you would like view solved from the following list:" << std::endl;
 	list.displayPuzzleNames();
-	cout << endl;
-	getline(cin, name, '\n');
+	std::cout << std::endl;
+	getline(std::cin, name, '\n');
 	goto display_solved_sudoku;
 
 
@@ -635,10 +592,10 @@ view_solved_sudoku:
 	//-----------------------------------------------------------------------------------//
 check_sudoku:
 	list.checkSudoku(name);
-	cout << "          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
-	cout << "          Return to the start:                                   (enter 1)" << endl;
-	cout << "          Quit the application:                                  (enter 2)" << endl;
-	cout << "          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
+	std::cout << "          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+	std::cout << "          Return to the start:                                   (enter 1)" << std::endl;
+	std::cout << "          Quit the application:                                  (enter 2)" << std::endl;
+	std::cout << "          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
 
 	//---------------------------------------------------------------------------------------------------//
 		//Program needs '\n' as a delimiter or else an invalid entry could send the program into an 
@@ -648,10 +605,10 @@ check_sudoku:
 		//But, the following logic allows me the ease of use of getline, with a switch statement.
 		//-----------------------------------------------------------------------------------------------//
 check_sudoku_input:
-	getline(cin, select, '\n');
+	getline(std::cin, select, '\n');
 	if (select.length() != 1)
 	{
-		cout << "          Invalid entry, try again:" << endl;
+		std::cout << "          Invalid entry, try again:" << std::endl;
 		goto check_sudoku_input;
 	}
 	select_char = select[0]; //Because a switch statement can't use strings.
@@ -663,7 +620,7 @@ check_sudoku_input:
 	case '2':
 		goto quit;
 	default:
-		cout << "          Invalid entry, try again:" << endl;
+		std::cout << "          Invalid entry, try again:" << std::endl;
 		goto check_sudoku_input;
 	}
 
@@ -676,10 +633,10 @@ check_sudoku_input:
 	//---------------------------------------------------------------------------------//
 display_solved_sudoku:
 	list.displaySolved(name);
-	cout << "          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
-	cout << "          Return to the start?                                   (enter 1)" << endl;
-	cout << "          Quit the application?                                  (enter 2)" << endl;
-	cout << "          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
+	std::cout << "          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+	std::cout << "          Return to the start?                                   (enter 1)" << std::endl;
+	std::cout << "          Quit the application?                                  (enter 2)" << std::endl;
+	std::cout << "          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
 
 	//------------------------------------------------------------------------------------------------------------------//
 		//Program needs '\n' as a delimiter or else an invalid entry could send the program into an 
@@ -690,10 +647,10 @@ display_solved_sudoku:
 		//with a switch statement
 		//------------------------------------------------------------------------------------------------------------------//
 display_solved_sudoku_input:
-	getline(cin, select, '\n');
+	getline(std::cin, select, '\n');
 	if (select.length() > 1)
 	{
-		cout << "          Invalid entry, try again:" << endl;
+		std::cout << "          Invalid entry, try again:" << std::endl;
 		goto display_solved_sudoku_input;
 	}
 	select_char = select[0];
@@ -705,7 +662,7 @@ display_solved_sudoku_input:
 	case '2':
 		goto quit;
 	default:
-		cout << "          Invalid entry, try again:" << endl;
+		std::cout << "          Invalid entry, try again:" << std::endl;
 		goto start;
 	}
 
@@ -713,15 +670,16 @@ display_solved_sudoku_input:
 
 
 quit:
-	cout << "          Thanks for playing!" << endl;
+	std::cout << "          Thanks for playing!" << std::endl;
 	return 0;
 }
 
 /*
-Checks a 9x9 array that represents a sudoku puzzle to see whether it is solved or not.
+	function description:
+	Checks a 9x9 array that represents a sudoku puzzle to see whether it is solved or not.
 
-PARAM: 9x9 integer array puzzle[9][9]: array representing a sudoku puzzle.
-RETURN: boolean variable: true if the sudoku is solved and zero if it is not.
+	PARAM: 9x9 integer array puzzle[9][9]: array representing a sudoku puzzle.
+	RETURN: boolean variable: true if the sudoku is solved and zero if it is not.
 */
 bool isSolved(int puzzle[9][9])
 {
@@ -737,10 +695,11 @@ bool isSolved(int puzzle[9][9])
 }
 
 /*
-Checks an array with 9 values to see whether there are duplicates.
+	function description:
+	Checks an array with 9 values to see whether there are duplicates.
 
-PARAM: integer array array[9]: array representing a line, column, or box in a sudoku puzzle.
-RETURN: boolean value: true if there are duplicates, false if there are no duplicates.
+	PARAM: integer array array[9]: array representing a line, column, or box in a sudoku puzzle.
+	RETURN: boolean value: true if there are duplicates, false if there are no duplicates.
 */
 bool duplicates(int array[9])
 {
@@ -764,19 +723,19 @@ bool duplicates(int array[9])
 }
 
 /*
-Checks a 9x9 array that represents a sudoku puzzle to ensure it is valid.
-It first checks to see if there are any invalid numbers, any number less than zero or more than nine.
-Then, it checks each row, column, and box to see if there are any duplicates.
+	function description:
+	Checks a 9x9 array that represents a sudoku puzzle to ensure it is valid.
+	It first checks to see if there are any invalid numbers, or any numbers less than zero or more than nine.
+	Then, it checks each row, column, and box to see if there are any duplicates.
 
-PARAM: 9x9 integer array puzzle[9][9]: array representing a sudoku puzzle.
-RETURN: boolean variable: true if the sudoku is valid, and zero if it is not.
+	PARAM: 9x9 integer array puzzle[9][9]: array representing a sudoku puzzle.
+	RETURN: boolean variable: true if the sudoku is valid, and zero if it is not.
 */
 bool isValid(int puzzle[9][9])
 {
 	int checkArray[9];
-	//--------------------------------------------------------//
+
 	//Check to see if there are any negatives or numbers over 9.
-	//--------------------------------------------------------//
 	for (int i = 0; i < 9; i++)
 	{
 		for (int j = 0; j < 9; j++)
@@ -787,9 +746,8 @@ bool isValid(int puzzle[9][9])
 			}
 		}
 	}
-	//--------------------------------------------//
+
 	//Check all rows to see if they have duplicates.
-	//--------------------------------------------//
 	for (int i = 0; i < 9; i++)
 	{
 		for (int j = 0; j < 9; j++)
@@ -801,9 +759,8 @@ bool isValid(int puzzle[9][9])
 			return false;
 		}
 	}
-	//-----------------------------------------------//
+
 	//Check all columns to see if they have duplicates.
-	//-----------------------------------------------//
 	for (int i = 0; i < 9; i++)
 	{
 		for (int j = 0; j < 9; j++)
@@ -816,10 +773,7 @@ bool isValid(int puzzle[9][9])
 		}
 	}
 
-
-	//---------------------------------------------//
 	//Check all boxes to see if they have duplicates.
-	//---------------------------------------------//
 	for (int i = 0; i <= 6; i = i + 3)
 	{
 		for (int j = 0; j <= 6; j = j + 3)
@@ -851,9 +805,10 @@ bool isValid(int puzzle[9][9])
 }
 
 /*
-Prints the sudoku puzzle with spaces between every value, and an endline after every row.
+	function description:
+	Prints the sudoku puzzle with spaces between every value, and an endline after every row.
 
-PARAM: 9x9 integer array puzzle[9][9]: array representing a sudoku puzzle.
+	PARAM: 9x9 integer array puzzle[9][9]: array representing a sudoku puzzle.
 */
 void printPuzzle(int puzzle[9][9])
 {
@@ -861,24 +816,23 @@ void printPuzzle(int puzzle[9][9])
 	{
 		for (int j = 0; j < 9; j++)
 		{
-			cout << puzzle[i][j] << " ";
+			std::cout << puzzle[i][j] << " ";
 		}
-		cout << endl;
+		std::cout << std::endl;
 	}
 }
 
 /*
-Used by the recursive sudoku algorithm to decide what the row index is for the next recursive call.
+	function description:
+	Used by the recursive sudoku algorithm to decide what the row index is for the next recursive call.
 
-PARAM: integer row_num: index of the current row.
-PARAM: integer column_num, index of the current column.
-RETURN: integer, the row index for the next recursive call.
+	PARAM: integer row_num: index of the current row.
+	PARAM: integer column_num, index of the current column.
+	RETURN: integer, the row index for the next recursive call.
 */
 int nextRow(int row_num, int column_num)
 {
-	//------------------------------------------------------------------------------//
-	//Only if the current function call is on the last column should the row increase.
-	//------------------------------------------------------------------------------//
+	//Row should increase only if the current function call is on the last column.
 	if (column_num == 8)
 	{
 		row_num++;
@@ -888,18 +842,17 @@ int nextRow(int row_num, int column_num)
 }
 
 /*
-Used by the recursive sudoku algorithm to decide what the column index is for the next recursive call.
+	function description:
+	Used by the recursive sudoku algorithm to decide what the column index is for the next recursive call.
 
-PARAM: integer row_num: index of the current row.
-PARAM: integer column_num: index of the current column.
-RETURN: integer, the column index for the next recursive call.
+	PARAM: integer row_num: index of the current row.
+	PARAM: integer column_num: index of the current column.
+	RETURN: integer, the column index for the next recursive call.
 */
 int nextColumn(int row_num, int column_num)
 {
-	//----------------------------------------------------------------------------------------------//
 	//If the current function call is on the last column, reset to the first column (of the next row).
 	//Increment the column in every other case to continue traversing a row.
-	//----------------------------------------------------------------------------------------------//
 	if (column_num == 8)
 	{
 		return  0;
@@ -912,40 +865,30 @@ int nextColumn(int row_num, int column_num)
 }
 
 /*
-Utilizes a recursive algorithm to be able to solve any sudoku puzzle.
+	function description:
+	Utilizes a recursive algorithm to be able to solve any sudoku puzzle.
 
-Because of how arrays are passed to functions in C++ as pointers, editing
-the array in any recursive call of solveSudoku will edit the same memory location
-as the origional call.
-
-PARAM: 9x9 integer array puzzle[9][9]: array representing a sudoku puzzle.
-PARAM: integer row_num, index representing the row of the array index to be filled (0 for first call).
-PARAM: integer column_num, index representing the column of the array index to be filled (0 for first call).
-RETURN: boolean variable, tells user whether the sudoku puzzle was solved or not.
+	PARAM: 9x9 integer array puzzle[9][9]: array representing a sudoku puzzle.
+	PARAM: integer row_num, index representing the row of the array index to be filled (0 for first call).
+	PARAM: integer column_num, index representing the column of the array index to be filled (0 for first call).
+	RETURN: boolean variable, tells user whether the sudoku puzzle was solved or not.
 */
 bool solveSudoku(int puzzle[9][9], int row_num, int column_num)
 {
-	//--------------------------------------------------------------------------------------//
 	// Initialize variables and determine the indices to be called in the next recursive call.
-	//--------------------------------------------------------------------------------------//
 	int next_row, next_column;
 	next_row = nextRow(row_num, column_num);
 	next_column = nextColumn(row_num, column_num);
 
-	//-----------------------------------------------------------------------//
 	//Base case - if the sudoku is solved, return true back through every call.
-	//-----------------------------------------------------------------------//
 	if (isSolved(puzzle))
 		return true;
 
-	//--------------------------------------------------------------------//
 	//If the current call of the function lands on an already filled square, 
 	//'skip' it by calling the next index without editing the sudoku array.
-	//--------------------------------------------------------------------//
 	if (puzzle[row_num][column_num] != 0)
 		return solveSudoku(puzzle, next_row, next_column);
 
-	//--------------------------------------------------------------------------------------------------------//
 	//If the sudoku is not solved, and the current call isn't on a filled space it is time to 'guess and check'.
 	//
 	//The guess: looping through the numbers 1-9.
@@ -957,7 +900,6 @@ bool solveSudoku(int puzzle[9][9], int row_num, int column_num)
 	//call of the function using next_row and next_column to move on to the next space.
 	// - If true is returned, that means that the sudoku puzzle[9][9] is solved so true is returned.
 	// - If false is returned, continue by 'guessing' a different value.
-	//-------------------------------------------------------------------------------------------------------//
 	for (int i = 1; i <= 9; i++)
 	{
 		puzzle[row_num][column_num] = i;
@@ -967,7 +909,7 @@ bool solveSudoku(int puzzle[9][9], int row_num, int column_num)
 				return true;
 		}
 	}
-	//-------------------------------------------------------------------------------------------------------------------//
+
 	//If every value 1-9 has been tried and they have all resulted in invalid puzzles
 	//it means that a previous recursive call of solveSudoku is incorrect (or the sudoku is unsolveable).
 	//
@@ -978,7 +920,6 @@ bool solveSudoku(int puzzle[9][9], int row_num, int column_num)
 	//
 	//NOTE: this also functions as a base case if the sudoku puzzle is unsolveable,
 	//false is returned back through all recursive calls.
-	//-------------------------------------------------------------------------------------------------------------------//
 	puzzle[row_num][column_num] = 0;
 	return false;
 }
